@@ -1,0 +1,33 @@
+---
+abstract: 'Log DBIC Queries'
+author:
+  - 'John Napiorkowski, C<< <jjnapiork@cpan.org> >>'
+build_requires:
+  ExtUtils::MakeMaker: 6.42
+  Test::More: 0.96
+configure_requires:
+  ExtUtils::MakeMaker: 6.42
+distribution_type: module
+generated_by: 'Module::Install version 1.00'
+license: perl
+meta-spec:
+  url: http://module-build.sourceforge.net/META-spec-v1.4.html
+  version: 1.4
+module_name: Plack::Middleware::Debug::DBIC::QueryLog
+name: Plack-Middleware-Debug-DBIC-QueryLog
+no_index:
+  directory:
+    - inc
+    - t
+requires:
+  DBIx::Class::QueryLog: 0
+  DBIx::Class::QueryLog::Analyzer: 0
+  Plack: 0
+  Plack::Middleware::Debug: 0
+  parent: 0
+  perl: 5.8.0
+resources:
+  homepage: http://github.com/jjn1056/Plack-Middleware-Debug-DBIC-QueryLog/tree
+  license: http://dev.perl.org/licenses/
+  repository: git://github.com/jjn1056/Plack-Middleware-Debug-DBIC-QueryLog.git
+version: 0.01
