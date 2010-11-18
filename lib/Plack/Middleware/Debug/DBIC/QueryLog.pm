@@ -1,6 +1,6 @@
 package Plack::Middleware::Debug::DBIC::QueryLog;
 use parent qw(Plack::Middleware::Debug::Base);
-our $VERSION = "0.02";
+our $VERSION = "0.03";
 
 use 5.008;
 use strict;
@@ -10,11 +10,11 @@ use DBIx::Class::QueryLog;
 use DBIx::Class::QueryLog::Analyzer;
 use Text::MicroTemplate qw(encoded_string);
 use Plack::Util::Accessor qw(querylog querylog_args);
-## use SQL::Abstract::Tree;
+use SQL::Abstract::Tree;
 
 =head1 NAME
 
-Plack::Middleware::Debug::DBIC::QueryLog - Log DBIC Queries
+Plack::Middleware::Debug::DBIC::QueryLog - DBIC Query Log and Query Analyzer 
 
 =head2 SYNOPSIS
 
@@ -22,13 +22,14 @@ Adds a debug panel and querylog object for logging L<DBIx::Class> queries.  Has
 support for L<Catalyst> via a L<Catalyst::TraitFor::Model::DBIC::Schema::QueryLog>
 compatible trait, L<Catalyst::TraitFor::Model::DBIC::Schema::QueryLog::AdoptPlack>.
 
-
     use Plack::Builder;
 
     my $app = ...; ## Build your Plack App
 
     builder {
-        enable 'Debug::DBIC::QueryLog', querylog_args => {passthrough => 1}; 
+        enable 'Debug';
+        enable 'Debug::DBIC::QueryLog',
+          querylog_args => {passthrough => 1};
         $app;
     };
 
@@ -43,8 +44,6 @@ L<Catalyst::TraitFor::Model::DBIC::Schema::QueryLog::AdoptPlack>
         traits => ['QueryLog::AdoptPlack'],
         ## .. rest of configuration
 	});
-
-    1;
 
 =head1 DESCRIPTION
 
@@ -76,9 +75,9 @@ all applications running inside of L<Plack>.  You need to 'tell' your applicatio
 instance of L<DBIx::Class> to use this C<$env> key and make sure you set
 L<DBIx::Class>'s debug object correctly:
 
-        my $querylog = $ctx->engine->env->{'plack.middleware.debug.dbic.querylog'};
-        $schema->storage->debugobj($querylog);
-        $schema->storage->debug(1);
+    my $querylog = $env->{'plack.middleware.debug.dbic.querylog'};
+    $schema->storage->debugobj($querylog);
+    $schema->storage->debug(1);
 
 That way when you view the debug panel, we have SQL to review.
 
@@ -121,7 +120,7 @@ it under the same terms as Perl itself.
 =cut
 
 my $template = __PACKAGE__->build_template(join '', <DATA>);
-##my $sqla_tree = SQL::Abstract::Tree->new({profile => 'html'});
+my $sqla_tree = SQL::Abstract::Tree->new({profile => 'html'});
 
 sub run {
     my ( $self, $env, $panel ) = @_;
@@ -136,8 +135,7 @@ sub run {
         if(@{$querylog_analyzer->get_sorted_queries}) {
             $panel->nav_subtitle(sprintf('Total Time: %.6f', $querylog->time_elapsed));
             $panel->content(sub {
-                    ##$self->render($template, [$querylog, $querylog_analyzer, $sqla_tree]);
-                    $self->render($template, [$querylog, $querylog_analyzer]);
+                $self->render($template, [$querylog, $querylog_analyzer, $sqla_tree]);
             });
         } else {
             $panel->nav_subtitle("No SQL");
@@ -154,40 +152,15 @@ __DATA__
 % my $total = sprintf('%.6f', $querylog->time_elapsed);
 % my $average_time = sprintf('%.6f', ($querylog->time_elapsed / $qcount));
 <style>
-
-#box-table-a
-{
-	font-family: "Lucida Sans Unicode", "Lucida Grande", Sans-Serif;
-	font-size: 12px;
-	text-align: left;
-    border-collapse: collapse;    
-}
-#box-table-a th
-{
-	font-size: 13px;
-	font-weight: normal;
-	padding: 8px;
-	background: #b9c9fe;
-	border-top: 4px solid #aabcfe;
-	border-bottom: 1px solid #fff;
-	color: #039;
-    white-space:nowrap;
-}
-#box-table-a td
-{
-	padding: 8px;
-	background: #e8edff; 
-	border-bottom: 1px solid #fff;
-	color: #669;
-	border-top: 1px solid transparent;
-}
-#box-table-a tr:hover td
-{
-	background: #d0dafd;
-	color: #339;
-}
-
-
+#plDebug .select { color:red }
+#plDebug .insert-into { color:red }
+#plDebug .delete-from { color:red }
+#plDebug .where { color:green }
+#plDebug .join { color:blue }
+#plDebug .on { color:DodgerBlue  }
+#plDebug .from { color:purple }
+#plDebug .order-by { color:DarkCyan }
+#plDebug .placeholder {color:gray}
 </style>
 <div>
   <br/>
@@ -201,27 +174,21 @@ __DATA__
   <table id="box-table-a">
     <thead class="query_header">
       <tr>
-        <th>Time Elapsed</th>
-        <th>Percent Of Total</th>
-        <th>SQL Statement</th>
-        <th>Bind Parameters</th>
+        <th style="padding-left:4px">Time</th>
+        <th style="padding-left:15px; padding-right:15px">Percent</th>
+        <th>SQL Statements</th>
       </tr>
     </thead>
     <tbody>
-% my $odd = 0;
+% my $even = 1;
 % for my $q (@{$querylog_analyzer->get_sorted_queries}) {
-%   #my $tree_info = encoded_string($sqla_tree->format($q->sql, $q->params));
-       <tr <%= $odd ? "class=odd":"" %> >
-        <td style="border-left: 1px solid #aabcfe;"><b><%= sprintf('%.6f', $q->time_elapsed) %></b></td>
-        <td><b><%= sprintf('%.1f', (($q->time_elapsed / $total ) * 100 )) %>%</b></td>
-        <td><%= $q->sql %></td>
-        <td style="border-right: 1px solid #aabcfe;"><ol>
-% foreach my $param (@{$q->params}) {
-            <li style="margin-left:30px;white-space:nowrap"><%= $param %></li>
-% }
-        </ol></td>
+%   my $tree_info = encoded_string($sqla_tree->format($q->sql, $q->params));
+       <tr <%= $even ? "class=plDebugOdd":"plDebugEven" %> >
+        <td style="padding-left:8px"><%= sprintf('%.7f', $q->time_elapsed) %></td>
+        <td style="padding-left:21px"><%= sprintf('%.2f', (($q->time_elapsed / $total ) * 100 )) %>%</td>
+        <td style="padding-left:6px; padding-bottom:6px"><%= $tree_info %></td>
       </tr>
-% $odd = $odd ? 0:1;
+% $even = $even ? 0:1;
 % }
     </tbody>
   </table>

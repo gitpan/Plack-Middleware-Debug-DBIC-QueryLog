@@ -10,6 +10,7 @@ inc/Module/Install/Fetch.pm
 inc/Module/Install/Homepage.pm
 inc/Module/Install/Include.pm
 inc/Module/Install/Makefile.pm
+inc/Module/Install/ManifestSkip.pm
 inc/Module/Install/Metadata.pm
 inc/Module/Install/ReadmeMarkdownFromPod.pm
 inc/Module/Install/Repository.pm
@@ -18,6 +19,7 @@ inc/Module/Install/WriteAll.pm
 inc/Pod/Markdown.pm
 lib/Plack/Middleware/Debug/DBIC/QueryLog.pm
 LICENSE
+maint/Makefile.PL.include
 Makefile.PL
 MANIFEST			This list of files
 META.yml

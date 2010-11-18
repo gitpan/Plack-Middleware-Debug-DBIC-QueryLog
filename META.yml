@@ -1,5 +1,5 @@
 ---
-abstract: 'Log DBIC Queries'
+abstract: 'DBIC Query Log and Query Analyzer '
 author:
   - 'John Napiorkowski, C<< <jjnapiork@cpan.org> >>'
 build_requires:
@@ -24,10 +24,11 @@ requires:
   DBIx::Class::QueryLog::Analyzer: 0
   Plack: 0
   Plack::Middleware::Debug: 0
+  SQL::Abstract: 1.70
   parent: 0
   perl: 5.8.0
 resources:
   homepage: http://search.cpan.org/dist/Plack-Middleware-Debug-DBIC-QueryLog/
   license: http://dev.perl.org/licenses/
   repository: git://github.com/jjn1056/Plack-Middleware-Debug-DBIC-QueryLog.git
-version: 0.02
+version: 0.03
