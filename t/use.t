@@ -1,7 +1,8 @@
+#!/usr/bin/env perl
+
 use strict;
-use warnings;
-use Test::More;
+use warnings FATAL => 'all';
+use Test::More tests => 1;
 
-use_ok 'Plack::Middleware::Debug::DBIC::QueryLog';
+BEGIN { use_ok 'Plack::Middleware::Debug::DBIC::QueryLog' }
 
-done_testing;

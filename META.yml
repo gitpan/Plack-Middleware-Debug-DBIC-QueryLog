@@ -4,6 +4,7 @@ author:
   - 'John Napiorkowski, C<< <jjnapiork@cpan.org> >>'
 build_requires:
   ExtUtils::MakeMaker: 6.42
+  Test::Fatal: 0
   Test::More: 0.96
 configure_requires:
   ExtUtils::MakeMaker: 6.42
@@ -17,18 +18,18 @@ module_name: Plack::Middleware::Debug::DBIC::QueryLog
 name: Plack-Middleware-Debug-DBIC-QueryLog
 no_index:
   directory:
+    - example
     - inc
     - t
 requires:
   DBIx::Class::QueryLog: 0
   DBIx::Class::QueryLog::Analyzer: 0
+  Moo: 0.009004
   Plack: 0
   Plack::Middleware::Debug: 0
   SQL::Abstract: 1.70
-  parent: 0
-  perl: 5.8.0
 resources:
   homepage: http://search.cpan.org/dist/Plack-Middleware-Debug-DBIC-QueryLog/
   license: http://dev.perl.org/licenses/
   repository: git://github.com/jjn1056/Plack-Middleware-Debug-DBIC-QueryLog.git
-version: 0.03
+version: 0.04
