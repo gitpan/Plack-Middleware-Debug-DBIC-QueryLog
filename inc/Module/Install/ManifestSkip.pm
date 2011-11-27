@@ -1,16 +1,26 @@
 #line 1
+##
+# name:      Module::Install::ManifestSkip
+# abstract:  Generate a MANIFEST.SKIP file
+# author:    Ingy döt Net <ingy@cpan.org>
+# license:   perl
+# copyright: 2010, 2011
+# see:
+# - Module::Manifest::Skip
+
 package Module::Install::ManifestSkip;
+use 5.008001;
 use strict;
 use warnings;
-use 5.008003;
 
-use Module::Install::Base;
+use base 'Module::Install::Base';
 
-use vars qw($VERSION @ISA);
-BEGIN {
-    $VERSION = '0.14';
-    @ISA     = 'Module::Install::Base';
-}
+my $requires = "
+use Module::Manifest::Skip 0.10 ();
+";
+
+our $VERSION = '0.20';
+our $AUTHOR_ONLY = 1;
 
 my $skip_file = "MANIFEST.SKIP";
 
@@ -18,67 +28,21 @@ sub manifest_skip {
     my $self = shift;
     return unless $self->is_admin;
 
-    print "manifest_skip\n";
+    eval $requires; die $@ if $@;
 
-    my $keepers;
-    if (-e $skip_file) {
-        open IN, $skip_file
-            or die "Can't open $skip_file for input: $!";
-        my $input = do {local $/; <IN>};
-        close IN;
-        if ($input =~ s/(.*?\n)\s*\n.*/$1/s and $input =~ /\S/) {
-            $keepers = $input;
-        }
-    }
+    print "Writing $skip_file\n";
+
     open OUT, '>', $skip_file
         or die "Can't open $skip_file for output: $!";;
 
-    if ($keepers) {
-        print OUT "$keepers\n";
-    }
-
-    print OUT _skip_files();
+    print OUT Module::Manifest::Skip->new->text;
 
     close OUT;
 
     $self->clean_files('MANIFEST');
-}
-
-sub _skip_files {
-    return <<'...';
-^Makefile$
-^Makefile\.old$
-^pm_to_blib$
-^blib/
-^pod2htm.*
-^MANIFEST\.SKIP$
-^MANIFEST\.bak$
-^\.git/
-^\.gitignore
-^\.gitmodules
-/\.git/
-\.svn/
-^\.vimrc$
-\.sw[op]$
-^core$
-^out$
-^tmon.out$
-^\w$
-^foo.*
-^notes
-^todo
-^ToDo$
-## avoid OS X finder files
-\.DS_Store$
-## skip komodo project files
-\.kpf$
-## ignore emacs and vim backup files
-~$
-...
+    $self->clean_files($skip_file)
+        if grep /^clean$/, @_;
 }
 
 1;
 
-=encoding utf8
-
-#line 135
