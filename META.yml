@@ -40,4 +40,4 @@ resources:
   homepage: http://search.cpan.org/dist/Plack-Middleware-Debug-DBIC-QueryLog/
   license: http://dev.perl.org/licenses/
   repository: git://github.com/jjn1056/Plack-Middleware-Debug-DBIC-QueryLog.git
-version: 0.07
+version: 0.08
