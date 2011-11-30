@@ -1,14 +1,26 @@
 #line 1
+#
+# This file is part of Pod-Markdown
+#
+# This software is copyright (c) 2004 by Marcel Gruenauer.
+#
+# This is free software; you can redistribute it and/or modify it under
+# the same terms as the Perl 5 programming language system itself.
+#
 use 5.008;
 use strict;
 use warnings;
 
 package Pod::Markdown;
+{
+  $Pod::Markdown::VERSION = '1.120001';
+}
 BEGIN {
-  $Pod::Markdown::VERSION = '1.110730';
+  $Pod::Markdown::AUTHORITY = 'cpan:RWSTAUNER';
 }
 # ABSTRACT: Convert POD to Markdown
 use parent qw(Pod::Parser);
+use Pod::ParseLink (); # core
 
 sub initialize {
     my $self = shift;
@@ -126,7 +138,7 @@ sub command {
         $data->{searching} = '';
     } elsif ($command =~ m{item}xms) {
         $paragraph = $parser->interpolate($paragraph, $line_num);
-        $paragraph =~ s{^\h* \* \h*}{}xms;
+        $paragraph =~ s{^[ \t]* \* [ \t]*}{}xms;
 
         if ($data->{searching} eq 'listpara') {
             $data->{searching} = 'listheadhuddled';
@@ -146,6 +158,24 @@ sub command {
 
 sub verbatim {
     my ($parser, $paragraph) = @_;
+
+    # POD verbatim can start with any number of spaces (or tabs)
+    # markdown should be 4 spaces (or a tab)
+    # so indent any paragraphs so that all lines start with at least 4 spaces
+    my @lines = split /\n/, $paragraph;
+    my $indent = ' ' x 4;
+    foreach my $line ( @lines ){
+        next unless $line =~ m/^( +)/;
+        # find the smallest indentation
+        $indent = $1 if length($1) < length($indent);
+    }
+    if( (my $smallest = length($indent)) < 4 ){
+        # invert to get what needs to be prepended
+        $indent = ' ' x (4 - $smallest);
+        # leave tabs alone
+        $paragraph = join "\n", map { /^\t/ ? $_ : $indent . $_ } @lines;
+    }
+
     $parser->_save($paragraph);
 }
 
@@ -206,21 +236,39 @@ sub interior_sequence {
 
 sub _resolv_link {
     my ($cmd, $arg) = @_;
-    my $text = $arg =~ s"^(.+?)\|"" ? $1 : '';
 
-    if ($arg =~ m{^http|ftp}xms) { # direct link to a URL
-        $text ||= $arg;
-        return sprintf '[%s](%s)', $text, $arg;
-    } elsif ($arg =~ m{^/(.*)$}) {
-        $text ||= $1;
-        $text = $1;
-        return "[$text](\#pod_$1)";
-    } elsif ($arg =~ m{^(\w+(?:::\w+)*)$}) {
-        $text ||= $1;
-        return "[$text](http://search.cpan.org/perldoc?$1)";
+    my ($text, $inferred, $name, $section, $type) =
+      Pod::ParseLink::parselink($arg);
+    my $url = '';
+
+    # TODO: make url prefixes configurable
+
+    if ($type eq 'url') {
+        $url = $name;
+    } elsif ($type eq 'man') {
+        # stolen from Pod::Simple::(X)HTML
+        my ($page, $part) = $name =~ /^([^(]+)(?:[(](\d+)[)])?$/;
+        $url = 'http://man.he.net/man' . ($part || 1) . '/' . $page;
     } else {
+        if ($name) {
+            $url = 'http://search.cpan.org/perldoc?' . $name;
+        }
+        if ($section){
+            # TODO: sites/pod formatters differ on how to transform the section
+            # TODO: we could do it according to specified url prefix or pod formatter
+            # TODO: or allow a coderef?
+            # TODO: (Pod::Simple::XHTML:idify() for metacpan)
+            # TODO: (Pod::Simple::HTML section_escape/unicode_escape_url/section_url_escape for s.c.o.)
+            $url .= '#' . $section;
+        }
+    }
+
+    # if we don't know how to handle the url just print the pod back out
+    if (!$url) {
         return sprintf '%s<%s>', $cmd, $arg;
     }
+
+    return sprintf '[%s](%s)', ($text || $inferred), $url;
 }
 
 sub format_header {
@@ -232,5 +280,5 @@ sub format_header {
 
 
 __END__
-#line 341
+#line 454
 
